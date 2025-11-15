@@ -20,6 +20,10 @@ print("Listo. Presiona el botón físico para tomar foto.")
 
 # ------------ LOOP ------------
 while True:
+    
+    if GPIO.input(BUTTON_PIN) == 1:
+        print("Obteniendo valor")
+    
     # Botón presionado → GPIO17 pasa a LOW
     if GPIO.input(BUTTON_PIN) == 0:
         print("Botón detectado → tomando foto...")
