@@ -4,10 +4,10 @@ import RPi.GPIO as GPIO
 from PIL import Image
 
 # ------------ CONFIG GPIO ------------
-BUTTON_PIN = 27  # <--- AHORA GPIO27
+BUTTON_PIN = 27  # GPIO 27
 
 GPIO.setmode(GPIO.BCM)
-GPIO.setup(BUTTON_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.setup(BUTTON_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)  # <-- PULL-DOWN
 
 # ------------ CONFIG CÁMARA ------------
 cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
@@ -16,14 +16,15 @@ cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 cap.set(cv2.CAP_PROP_FPS, 30)
 
-print("Sistema listo en GPIO27. Pulsa el botón para tomar foto.")
+print("Sistema listo en GPIO27 (PULL-DOWN). Presiona el botón para tomar foto.")
 
 # ------------ LOOP ------------
 while True:
-    if GPIO.input(BUTTON_PIN) == 0:  # LOW = botón presionado
+    # En pull-down: 0 = suelto, 1 = presionado
+    if GPIO.input(BUTTON_PIN) == 1:
         print("Botón detectado → tomando foto...")
 
-        # limpiar buffer viejo de la camara
+        # limpiar el buffer viejo de la cámara
         for _ in range(6):
             cap.read()
 
@@ -33,6 +34,6 @@ while True:
             Image.fromarray(rgb).save("foto_rgb.png")
             print("Foto guardada: foto_rgb.png")
         else:
-            print("Error leyendo la cámara")
+            print("Error capturando imagen.")
 
         time.sleep(0.4)  # anti-rebote
