@@ -81,53 +81,61 @@ print("Listo. Presiona el botón para mover servo + tomar foto + verificar RGB."
 mover_servo1(0)
 mover_servo2(0)
 # ------------ LOOP PRINCIPAL ------------
+last_button_time = 0
+DEBOUNCE_TIME = 1.5  # Tiempo mínimo entre capturas
+
 while True:
     if GPIO.input(BUTTON_PIN) == 1:  # presionado
         
+        current_time = time.time()
+        if current_time - last_button_time < DEBOUNCE_TIME:
+            continue  # Ignorar si fue presionado muy recientemente
+        
+        last_button_time = current_time
         print("Button Pushed")
-        
-        ok,bgr = cap.read() 
-        
-        # Take picture
+
+        # ---- FLUSH REAL DEL BUFFER ----
+        print("Limpiando buffer de cámara...")
+        for _ in range(10):
+            cap.grab()   # Avanza el frame sin decodificar
+
+        # ---- AHORA SÍ TOMAMOS IMAGEN NUEVA ----
+        ok, bgr = cap.read()
         if not ok:
             print("ERROR While trying to capture")
             continue
-        
+
         # Convert to RGB
         rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
         Image.fromarray(rgb).save("photo.png")
         print("Saved image photo.png")
 
-        
         print("Starting Inference")
-        
+
         # Preparar imagen para inferencia
         input_shape = input_details[0]['shape']
         img_height, img_width = input_shape[1], input_shape[2]
-        
-        # Redimensionar imagen
+
         img_resized = cv2.resize(rgb, (img_width, img_height))
-        
-        # Normalizar según el tipo de entrada del modelo
+
+        # Normalización
         if input_details[0]['dtype'] == np.float32:
             input_data = np.expand_dims(img_resized.astype(np.float32) / 255.0, axis=0)
         else:
             input_data = np.expand_dims(img_resized, axis=0)
-        
-        # Realizar inferencia
+
         interpreter.set_tensor(input_details[0]['index'], input_data)
         interpreter.invoke()
-        
-        # Obtener resultados
+
         output_data = interpreter.get_tensor(output_details[0]['index'])
         predicted_class = np.argmax(output_data[0])
         confidence = output_data[0][predicted_class]
         predicted_name = CLASS_NAMES[predicted_class]
-        
+
         print(f"Clase predicha: {predicted_name} (índice {predicted_class}), Confianza: {confidence:.2f}")
         print(f"Salidas completas: {output_data[0]}")
-        
-        # Ejemplo de uso de los servos basado en la predicción
+
+        # Movimiento de servos según clase
         if predicted_class in [0,1]:
             mover_servo1(0)
             mover_servo2(0)
@@ -137,6 +145,5 @@ while True:
         else:
             mover_servo1(0)
             mover_servo2(200)
-        
-        time.sleep(0.5)  # Debounce
-        
+
+        time.sleep(0.5)
