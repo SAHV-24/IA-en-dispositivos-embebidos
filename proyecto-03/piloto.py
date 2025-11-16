@@ -30,10 +30,6 @@ servo2 = AngularServo(
     max_pulse_width=0.0025
 )
 
-# Posiciones útiles para clasificador
-POS_A = 0     # izquierda
-POS_B = 90    # centro
-POS_C = 180   # derecha
 
 # ------------ CONFIG TENSORFLOW LITE ------------
 MODEL_PATH = "project_model.tflite"
@@ -68,14 +64,22 @@ def mover_servo2(angulo):
         print(f"Ángulo fuera de rango para servo 2: {angulo}")
 
 # ------------ CONFIG CÁMARA ------------
-cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
+cap = cv2.VideoCapture(0)
+if not cap.isOpened():
+    print("ERROR: No se puede abrir la cámara")
+    print("Verifica que la cámara esté conectada y habilitada con 'sudo raspi-config'")
+    exit(1)
+
 cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 cap.set(cv2.CAP_PROP_FPS, 30)
 
+print("Cámara inicializada correctamente")
 print("Listo. Presiona el botón para mover servo + tomar foto + verificar RGB.")
 
+mover_servo1(0)
+mover_servo2(0)
 # ------------ LOOP PRINCIPAL ------------
 while True:
     if GPIO.input(BUTTON_PIN) == 1:  # presionado
@@ -87,8 +91,9 @@ while True:
         # Take picture
         if not ok:
             print("ERROR While trying to capture")
+            continue
         
-        # Convert to RG
+        # Convert to RGB
         rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
         Image.fromarray(rgb).save("photo.png")
         print("Saved image photo.png")
@@ -127,11 +132,11 @@ while True:
             mover_servo1(0)
             mover_servo2(0)
         elif predicted_class in [2,3]:
-            mover_servo1(90)
-            mover_servo2(135)
+            mover_servo1(200)
+            mover_servo2(0)
         else:
-            mover_servo1(180)
-            mover_servo2(270)
+            mover_servo1(0)
+            mover_servo2(200)
         
         time.sleep(0.5)  # Debounce
         
