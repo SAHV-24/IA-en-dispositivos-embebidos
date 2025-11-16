@@ -4,7 +4,7 @@ import RPi.GPIO as GPIO
 from PIL import Image
 from gpiozero import AngularServo
 import numpy as np
-import tflite_runtime.interpreter as tflite
+import tensorflow as tf
 
 # ------------ CONFIGURACIÓN BOTÓN (PULL-DOWN) ------------
 BUTTON_PIN = 27
@@ -37,7 +37,7 @@ POS_C = 180   # derecha
 
 # ------------ CONFIG TENSORFLOW LITE ------------
 MODEL_PATH = "project_model.tflite"
-interpreter = tflite.Interpreter(model_path=MODEL_PATH)
+interpreter = tf.lite.Interpreter(model_path=MODEL_PATH)
 interpreter.allocate_tensors()
 
 input_details = interpreter.get_input_details()
