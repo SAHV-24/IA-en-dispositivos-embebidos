@@ -49,7 +49,7 @@ CLASS_NAMES = ['Beetroot', 'Cauliflower', 'Orange', 'Pear', 'Pineapple', 'Waterm
 # ------------ FUNCIONES PARA MOVER SERVOS ------------
 def mover_servo1(angulo):
     """Mueve el servo 1 al ángulo especificado (0-180)"""
-    if 0 <= angulo <= 180:
+    if 0 <= angulo <= 270:
         servo.angle = angulo
         print(f"Servo 1 movido a {angulo}°")
     else:
