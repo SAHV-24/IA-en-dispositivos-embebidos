@@ -9,8 +9,13 @@ import tensorflow as tf
 # ------------ CONFIGURACIÓN BOTÓN (PULL-DOWN) ------------
 BUTTON_PIN = 27
 
+# ------------ CONFIGURACIÓN MOTOR REDUCTOR ------------
+MOTOR_PIN = 17  # Pin GPIO para el motor reductor
+
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(BUTTON_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)  # Pull-down
+GPIO.setup(MOTOR_PIN, GPIO.OUT)
+GPIO.output(MOTOR_PIN, GPIO.LOW)  # Motor apagado al inicio
 
 # ------------ CONFIG SERV0 ------------
 servo = AngularServo(
@@ -62,6 +67,20 @@ def mover_servo2(angulo):
         print(f"Servo 2 movido a {angulo}°")
     else:
         print(f"Ángulo fuera de rango para servo 2: {angulo}")
+
+def activar_motor_reductor(segundos=5):
+    """Activa el motor reductor por el tiempo especificado"""
+    print(f"Activando motor reductor por {segundos} segundos...")
+    GPIO.output(MOTOR_PIN, GPIO.HIGH)
+    time.sleep(segundos)
+    GPIO.output(MOTOR_PIN, GPIO.LOW)
+    print("Motor reductor detenido")
+
+def resetear_servos():
+    """Regresa los servos a posición cero"""
+    print("Regresando servos a posición inicial...")
+    mover_servo1(0)
+    mover_servo2(0)
 
 # ------------ CONFIG CÁMARA ------------
 cap = cv2.VideoCapture(0)
@@ -135,7 +154,8 @@ while True:
         print(f"Clase predicha: {predicted_name} (índice {predicted_class}), Confianza: {confidence:.2f}")
         print(f"Salidas completas: {output_data[0]}")
 
-        # Movimiento de servos según clase
+        # Paso 1: Movimiento de servos según clase
+        print("\n--- Paso 1: Moviendo servos ---")
         if predicted_class in [0,1]:
             mover_servo1(0)
             mover_servo2(0)
@@ -146,4 +166,19 @@ while True:
             mover_servo1(0)
             mover_servo2(200)
 
-        time.sleep(0.5)
+        time.sleep(1)  # Esperar a que los servos se posicionen
+        
+        # Paso 2: Activar motor reductor por 5 segundos
+        print("\n--- Paso 2: Activando motor reductor ---")
+        activar_motor_reductor(5)
+        
+        # Paso 3: Resetear servos a cero
+        print("\n--- Paso 3: Reseteando servos ---")
+        resetear_servos()
+        
+        # Esperar a que el usuario suelte el botón
+        while GPIO.input(BUTTON_PIN) == 1:
+            time.sleep(0.1)
+        
+        print("\nListo para siguiente captura\n")
+        print("="*50)
