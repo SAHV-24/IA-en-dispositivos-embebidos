@@ -164,7 +164,7 @@ while True:
             mover_servo2(0)
         else:
             mover_servo1(0)
-            mover_servo2(66)
+            mover_servo2(80)
 
         time.sleep(1)  # Esperar a que los servos se posicionen
         
