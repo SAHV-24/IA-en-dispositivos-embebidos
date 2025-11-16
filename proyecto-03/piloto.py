@@ -16,7 +16,7 @@ GPIO.setup(BUTTON_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)  # Pull-down
 servo = AngularServo(
     18,
     min_angle=0,
-    max_angle=180,
+    max_angle=270,
     min_pulse_width=0.0005,
     max_pulse_width=0.0025
 )
