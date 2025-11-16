@@ -4,59 +4,65 @@ import RPi.GPIO as GPIO
 from PIL import Image
 from gpiozero import AngularServo
 import numpy as np
-from edge_impulse_linux.tflite_runtime import Interpreter
+import tflite_runtime.interpreter as tflite
 
 # ------------ CONFIGURACIÓN BOTÓN (PULL-DOWN) ------------
 BUTTON_PIN = 27
 
 GPIO.setmode(GPIO.BCM)
-GPIO.setup(BUTTON_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+GPIO.setup(BUTTON_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)  # Pull-down
 
-# ------------ CONFIG SERVOS ------------
+# ------------ CONFIG SERV0 ------------
 servo = AngularServo(
     18,
-    min_angle=0, max_angle=180,
+    min_angle=0,
+    max_angle=180,
     min_pulse_width=0.0005,
     max_pulse_width=0.0025
 )
 
+# ------------ CONFIG SERVO 2 ------------
 servo2 = AngularServo(
     23,
-    min_angle=0, max_angle=270,
+    min_angle=0,
+    max_angle=270,
     min_pulse_width=0.0005,
     max_pulse_width=0.0025
 )
 
-# Posiciones útiles
-POS_A = 0
-POS_B = 90
-POS_C = 180
+# Posiciones útiles para clasificador
+POS_A = 0     # izquierda
+POS_B = 90    # centro
+POS_C = 180   # derecha
 
-# ------------ CONFIG TFLITE (EDGE IMPULSE .tflite) ------------
-MODEL_PATH = "model.tflite"  # tu archivo convertido a .tflite
-
-interpreter = Interpreter(model_path=MODEL_PATH)
+# ------------ CONFIG TENSORFLOW LITE ------------
+MODEL_PATH = "project_model.tflite"
+interpreter = tflite.Interpreter(model_path=MODEL_PATH)
 interpreter.allocate_tensors()
 
 input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
 
-IMG_HEIGHT = input_details[0]['shape'][1]
-IMG_WIDTH = input_details[0]['shape'][2]
+print(f"Modelo cargado: {MODEL_PATH}")
+print(f"Input shape: {input_details[0]['shape']}")
+print(f"Output shape: {output_details[0]['shape']}")
 
-print("Modelo cargado correctamente.")
-print(f"Input shape: {IMG_WIDTH}x{IMG_HEIGHT}")
-
-# ------------ FUNCIONES SERVO ------------
+# ------------ FUNCIONES PARA MOVER SERVOS ------------
 def mover_servo1(angulo):
+    """Mueve el servo 1 al ángulo especificado (0-180)"""
     if 0 <= angulo <= 180:
         servo.angle = angulo
-        print(f"Servo 1 → {angulo}°")
+        print(f"Servo 1 movido a {angulo}°")
+    else:
+        print(f"Ángulo fuera de rango para servo 1: {angulo}")
 
 def mover_servo2(angulo):
+    """Mueve el servo 2 al ángulo especificado (0-270)"""
     if 0 <= angulo <= 270:
         servo2.angle = angulo
-        print(f"Servo 2 → {angulo}°")
+        print(f"Servo 2 movido a {angulo}°")
+    else:
+        print(f"Ángulo fuera de rango para servo 2: {angulo}")
 
 # ------------ CONFIG CÁMARA ------------
 cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
@@ -65,55 +71,63 @@ cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 cap.set(cv2.CAP_PROP_FPS, 30)
 
-print("Listo. Presiona el botón para tomar foto + inferencia + mover servos.")
+print("Listo. Presiona el botón para mover servo + tomar foto + verificar RGB.")
 
 # ------------ LOOP PRINCIPAL ------------
 while True:
-    if GPIO.input(BUTTON_PIN) == 1:
-
-        print("\nBotón presionado → capturando foto...")
-
-        # Tomar foto
-        ok, bgr = cap.read()
+    if GPIO.input(BUTTON_PIN) == 1:  # presionado
+        
+        print("Button Pushed")
+        
+        ok,bgr = cap.read() 
+        
+        # Take picture
         if not ok:
-            print("ERROR capturando imagen")
-            continue
-
-        # Convertir RGB + guardar
+            print("ERROR While trying to capture")
+        
+        # Convert to RG
         rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
         Image.fromarray(rgb).save("photo.png")
-        print("Imagen guardada: photo.png")
+        print("Saved image photo.png")
 
-        # ------------ PREPARAR IMAGEN PARA TFLITE ------------
-        img_resized = cv2.resize(rgb, (IMG_WIDTH, IMG_HEIGHT))
-
+        
+        print("Starting Inference")
+        
+        # Preparar imagen para inferencia
+        input_shape = input_details[0]['shape']
+        img_height, img_width = input_shape[1], input_shape[2]
+        
+        # Redimensionar imagen
+        img_resized = cv2.resize(rgb, (img_width, img_height))
+        
+        # Normalizar según el tipo de entrada del modelo
         if input_details[0]['dtype'] == np.float32:
             input_data = np.expand_dims(img_resized.astype(np.float32) / 255.0, axis=0)
         else:
-            input_data = np.expand_dims(img_resized.astype(np.uint8), axis=0)
-
+            input_data = np.expand_dims(img_resized, axis=0)
+        
+        # Realizar inferencia
         interpreter.set_tensor(input_details[0]['index'], input_data)
         interpreter.invoke()
-
-        output_data = interpreter.get_tensor(output_details[0]['index'])[0]
-
-        predicted_class = int(np.argmax(output_data))
-        confidence = float(output_data[predicted_class])
-
-        print(f"Clase predicha: {predicted_class}  | Confianza: {confidence:.2f}")
-        print("Vectores de salida:", output_data)
-
-        # ------------ CONTROL DE SERVOS SEGÚN LA CLASE ------------
-        if predicted_class in [0, 1]:
+        
+        # Obtener resultados
+        output_data = interpreter.get_tensor(output_details[0]['index'])
+        predicted_class = np.argmax(output_data[0])
+        confidence = output_data[0][predicted_class]
+        
+        print(f"Clase predicha: {predicted_class}, Confianza: {confidence:.2f}")
+        print(f"Salidas completas: {output_data[0]}")
+        
+        # Ejemplo de uso de los servos basado en la predicción
+        if predicted_class in [0,1]:
             mover_servo1(0)
             mover_servo2(0)
-
-        elif predicted_class in [2, 3]:
+        elif predicted_class in [2,3]:
             mover_servo1(90)
             mover_servo2(135)
-
         else:
             mover_servo1(180)
             mover_servo2(270)
-
-        time.sleep(0.4)
+        
+        time.sleep(0.5)  # Debounce
+        
