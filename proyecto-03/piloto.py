@@ -47,6 +47,9 @@ print(f"Modelo cargado: {MODEL_PATH}")
 print(f"Input shape: {input_details[0]['shape']}")
 print(f"Output shape: {output_details[0]['shape']}")
 
+# ------------ CLASES DEL MODELO ------------
+CLASS_NAMES = ['Beetroot', 'Cauliflower', 'Orange', 'Pear', 'Pineapple', 'Watermelon']
+
 # ------------ FUNCIONES PARA MOVER SERVOS ------------
 def mover_servo1(angulo):
     """Mueve el servo 1 al ángulo especificado (0-180)"""
@@ -114,8 +117,9 @@ while True:
         output_data = interpreter.get_tensor(output_details[0]['index'])
         predicted_class = np.argmax(output_data[0])
         confidence = output_data[0][predicted_class]
+        predicted_name = CLASS_NAMES[predicted_class]
         
-        print(f"Clase predicha: {predicted_class}, Confianza: {confidence:.2f}")
+        print(f"Clase predicha: {predicted_name} (índice {predicted_class}), Confianza: {confidence:.2f}")
         print(f"Salidas completas: {output_data[0]}")
         
         # Ejemplo de uso de los servos basado en la predicción
