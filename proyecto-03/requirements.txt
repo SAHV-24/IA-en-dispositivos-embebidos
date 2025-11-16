@@ -1,6 +1,7 @@
-RPi.GPIO>=0.7.1
-gpiozero>=2.0
-opencv-python>=4.5.0
-Pillow>=9.0.0
-numpy>=1.21.0
-edge-impulse-linux>=1.0.0
+opencv-python-headless==4.7.0.72
+numpy==1.24.4
+Pillow==9.4.0
+gpiozero==1.6.2
+RPi.GPIO==0.7.1a4
+edge_impulse-linux==1.0.10
+tflite-runtime==2.11.0
