@@ -10,8 +10,9 @@ import tensorflow as tf
 BUTTON_PIN = 27
 
 # ------------ CONFIGURACIÓN MOTOR REDUCTOR ------------
-MOTOR_PIN = 17  # Pin GPIO para el motor reductor
+MOTOR_PIN = 26  # usa este en vez de 17
 
+# relé APAGADO apenas se configure
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(BUTTON_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)  # Pull-down
 GPIO.setup(MOTOR_PIN, GPIO.OUT)
