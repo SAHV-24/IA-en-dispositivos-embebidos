@@ -160,11 +160,11 @@ while True:
             mover_servo1(0)
             mover_servo2(0)
         elif predicted_class in [2,3]:
-            mover_servo1(135)
+            mover_servo1(75)
             mover_servo2(0)
         else:
             mover_servo1(0)
-            mover_servo2(80)
+            mover_servo2(75)
 
         time.sleep(1)  # Esperar a que los servos se posicionen
         
