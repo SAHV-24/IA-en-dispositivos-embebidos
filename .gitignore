@@ -1,6 +1,5 @@
-﻿
-proyecto-03\photo.png
-
+﻿photo.png
+./proyecto-03/photo.png
 # OS/IDE
 .DS_Store
 Thumbs.db

@@ -38,7 +38,7 @@ servo2 = AngularServo(
 
 
 # ------------ CONFIG TENSORFLOW LITE ------------
-MODEL_PATH = "project_model.tflite"
+MODEL_PATH = "../models/project_model.tflite"
 interpreter = tf.lite.Interpreter(model_path=MODEL_PATH)
 interpreter.allocate_tensors()
 
@@ -127,8 +127,8 @@ while True:
 
         # Convert to RGB
         rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
-        Image.fromarray(rgb).save("photo.png")
-        print("Saved image photo.png")
+        Image.fromarray(rgb).save("../outputs/photo.png")
+        print("Saved image ../outputs/photo.png")
 
         print("Starting Inference")
 
