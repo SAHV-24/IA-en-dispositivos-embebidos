@@ -10,7 +10,7 @@ import tensorflow as tf
 BUTTON_PIN = 27
 
 # ------------ CONFIGURACIÓN MOTOR REDUCTOR ------------
-MOTOR_PIN = 26  # usa este en vez de 17
+MOTOR_PIN = 26 
 
 # relé APAGADO apenas se configure
 GPIO.setmode(GPIO.BCM)
@@ -171,15 +171,15 @@ while True:
         
         # Paso 2: Activar motor reductor por 5 segundos
         print("\n--- Paso 2: Activando motor reductor ---")
-        activar_motor_reductor(5)
+        activar_motor_reductor(10)
         
         # Paso 3: Resetear servos a cero
         print("\n--- Paso 3: Reseteando servos ---")
         resetear_servos()
         
-        # Esperar a que el usuario suelte el botón
-        while GPIO.input(BUTTON_PIN) == 1:
-            time.sleep(0.1)
+        # # Esperar a que el usuario suelte el botón
+        # while GPIO.input(BUTTON_PIN) == 1:
+        #     time.sleep(0.1)
         
         print("\nListo para siguiente captura\n")
         print("="*50)
